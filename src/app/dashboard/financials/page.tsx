@@ -58,6 +58,8 @@ const categoryLabels: Record<string, string> = {
 
 export default function FinancialsPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchStats()
