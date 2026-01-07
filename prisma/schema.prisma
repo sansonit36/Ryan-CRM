@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          String    @default("EDITOR") // ADMIN, EDITOR, SOCIAL_MANAGER, INVESTOR
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  videos        Video[]   @relation("UploadedVideos")
+  reviews       VideoReview[]
+  expenses      Expense[]
+  salaries      Salary[]
+}
+
+model Video {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  googleDriveUrl String
+  thumbnailUrl  String?
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED, PUBLISHED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  uploadedById  String
+  uploadedBy    User      @relation("UploadedVideos", fields: [uploadedById], references: [id])
+  reviews       VideoReview[]
+  socialPosts   SocialPost[]
+}
+
+model SocialPost {
+  id            String    @id @default(cuid())
+  platform      String    // YOUTUBE, TIKTOK, FACEBOOK, INSTAGRAM, SNAPCHAT, OTHER
+  url           String
+  views         Int       @default(0)
+  postedAt      DateTime  @default(now())
+  
+  // Relations
+  videoId       String
+  video         Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model VideoReview {
+  id            String    @id @default(cuid())
+  status        String    // APPROVED, REJECTED
+  feedback      String?
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  videoId       String
+  video         Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  reviewerId    String
+  reviewer      User      @relation(fields: [reviewerId], references: [id])
+}
+
+model Expense {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  amount        Float
+  category      String    // OFFICE_RENT, OFFICE_EXPENSE, AI_SUBSCRIPTION, SOFTWARE, EQUIPMENT, OTHER
+  receiptUrl    String?
+  date          DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  addedById     String
+  addedBy       User      @relation(fields: [addedById], references: [id])
+}
+
+model Salary {
+  id            String    @id @default(cuid())
+  employeeName  String
+  amount        Float
+  month         String    // Format: YYYY-MM
+  status        String    @default("PENDING") // PENDING, PAID
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  addedById     String
+  addedBy       User      @relation(fields: [addedById], references: [id])
+}
+
+model Subscription {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  amount        Float
+  billingCycle  String    // MONTHLY, YEARLY
+  nextBillingDate DateTime
+  status        String    @default("ACTIVE") // ACTIVE, CANCELLED
+  category      String    // AI, SOFTWARE, CLOUD, OTHER
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
