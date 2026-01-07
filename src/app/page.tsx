@@ -64,7 +64,7 @@ export default function HomePage() {
                 </Button>
               </Link>
               <Link href="/login">
-                <Button size="lg" variant="outline" className="text-lg px-8 text-white border-white/30 hover:bg-white/10">
+                <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent text-white border-white/30 hover:bg-white/10">
                   Sign in to Dashboard
                 </Button>
               </Link>
