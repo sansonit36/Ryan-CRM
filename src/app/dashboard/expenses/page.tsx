@@ -498,9 +498,9 @@ export default function ExpensesPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
 
-      {/* Stats */ }
+
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50">
           <CardContent className="p-6">
@@ -672,49 +672,49 @@ export default function ExpensesPage() {
         </Card>
       </div>
 
-  {/* Receipt Viewer Modal */ }
-  <Dialog open={!!viewingReceipt} onOpenChange={() => setViewingReceipt(null)}>
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>Receipt</DialogTitle>
-      </DialogHeader>
-      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100">
-        {viewingReceipt && (
-          viewingReceipt.startsWith("/uploads/") ? (
-            <Image
-              src={viewingReceipt}
-              alt="Receipt"
-              fill
-              className="object-contain"
-            />
-          ) : (
-            <iframe
-              src={viewingReceipt}
-              className="w-full h-full"
-              title="Receipt"
-            />
-          )
-        )}
-      </div>
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setViewingReceipt(null)}
-        >
-          Close
-        </Button>
-        {viewingReceipt && (
-          <a href={viewingReceipt} target="_blank" rel="noopener noreferrer">
-            <Button>
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open Full Size
+      {/* Receipt Viewer Modal */}
+      <Dialog open={!!viewingReceipt} onOpenChange={() => setViewingReceipt(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Receipt</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100">
+            {viewingReceipt && (
+              viewingReceipt.startsWith("/uploads/") ? (
+                <Image
+                  src={viewingReceipt}
+                  alt="Receipt"
+                  fill
+                  className="object-contain"
+                />
+              ) : (
+                <iframe
+                  src={viewingReceipt}
+                  className="w-full h-full"
+                  title="Receipt"
+                />
+              )
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setViewingReceipt(null)}
+            >
+              Close
             </Button>
-          </a>
-        )}
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+            {viewingReceipt && (
+              <a href={viewingReceipt} target="_blank" rel="noopener noreferrer">
+                <Button>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open Full Size
+                </Button>
+              </a>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div >
   )
 }
