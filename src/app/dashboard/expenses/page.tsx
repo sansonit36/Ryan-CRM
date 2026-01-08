@@ -192,25 +192,41 @@ export default function ExpensesPage() {
 
     setUploading(true)
     try {
-      const uploadFormData = new FormData()
-      uploadFormData.append("file", receiptFile)
-
-      const res = await fetch("/api/upload", {
+      // 1. Request Signed Upload URL
+      const signRes = await fetch("/api/upload", {
         method: "POST",
-        body: uploadFormData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: receiptFile.name,
+          fileType: receiptFile.type
+        }),
       })
 
-      if (res.ok) {
-        const { url } = await res.json()
-        return url
+      if (!signRes.ok) {
+        const errorData = await signRes.json()
+        throw new Error(errorData.error || "Failed to get upload signature")
       }
 
-      const errorData = await res.json()
-      toast.error(errorData.error || "Upload failed")
-      return null
-    } catch (error) {
+      const { signedUrl, publicUrl } = await signRes.json()
+
+      // 2. Upload directly to Supabase Storage
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": receiptFile.type,
+        },
+        body: receiptFile,
+      })
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to storage")
+      }
+
+      return publicUrl
+
+    } catch (error: any) {
       console.error("Error uploading receipt:", error)
-      toast.error("Error uploading receipt. Check network or file size.")
+      toast.error(error.message || "Error uploading receipt")
       return null
     } finally {
       setUploading(false)

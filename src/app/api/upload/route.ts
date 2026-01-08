@@ -21,66 +21,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const formData = await request.formData()
-    const file = formData.get("file") as File | null
+    const { filename, fileType } = await request.json()
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
-    }
-
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Invalid file type. Only images are allowed." },
-        { status: 400 }
-      )
-    }
-
-    // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 50MB." },
-        { status: 400 }
-      )
+    if (!filename || !fileType) {
+      return NextResponse.json({ error: "Missing filename or fileType" }, { status: 400 })
     }
 
     // Generate unique filename
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(2, 8)
-    const extension = file.name.split(".").pop()
-    const filename = `receipt_${timestamp}_${randomString}.${extension}`
+    const extension = filename.split(".").pop()
+    const uniqueFilename = `receipt_${timestamp}_${randomString}.${extension}`
 
-    // Upload to Supabase Storage
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    const { data, error } = await supabase
+    // Create Signed Upload URL
+    const { data: signedData, error: signedError } = await supabase
       .storage
-      .from("receipts")
-      .upload(filename, buffer, {
-        contentType: file.type,
-        upsert: false
-      })
+      .from('receipts')
+      .createSignedUploadUrl(uniqueFilename)
 
-    if (error) {
-      console.error("Supabase Storage Error:", error)
-      return NextResponse.json({ error: "Storage upload failed" }, { status: 500 })
+    if (signedError) {
+      throw signedError
     }
 
     // Get Public URL
     const { data: { publicUrl } } = supabase
       .storage
       .from("receipts")
-      .getPublicUrl(filename)
+      .getPublicUrl(uniqueFilename)
 
-    return NextResponse.json({ url: publicUrl })
+    return NextResponse.json({
+      signedUrl: signedData.signedUrl,
+      publicUrl,
+      path: uniqueFilename // Return path for reference if needed
+    })
 
   } catch (error: any) {
     console.error("Upload error details:", error)
     return NextResponse.json(
-      { error: error.message || "Failed to upload file due to server error" },
+      { error: error.message || "Failed to initiate upload due to server error" },
       { status: 500 }
     )
   }
