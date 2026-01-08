@@ -120,11 +120,18 @@ export default function ExpensesPage() {
       let startDate: Date | null = null
       let endDate: Date | null = null
 
+      // Helper to format "YYYY-MM" using local time to avoid timezone shifts
+      const formatMonth = (d: Date) => {
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        return `${year}-${month}`
+      }
+
       if (filterType === "THIS_MONTH") {
-        url += `?month=${now.toISOString().slice(0, 7)}`
+        url += `?month=${formatMonth(now)}`
       } else if (filterType === "LAST_MONTH") {
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        url += `?month=${lastMonth.toISOString().slice(0, 7)}`
+        url += `?month=${formatMonth(lastMonth)}`
       } else if (filterType === "CUSTOM") {
         url += `?month=${selectedMonth}`
       } else if (filterType !== "ALL") {
