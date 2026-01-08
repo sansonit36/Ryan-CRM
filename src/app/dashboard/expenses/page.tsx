@@ -167,9 +167,9 @@ export default function ExpensesPage() {
       return
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File too large. Maximum size is 5MB.")
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert("File too large. Maximum size is 50MB.")
       return
     }
 
@@ -472,7 +472,7 @@ export default function ExpensesPage() {
                 >
                   <Upload className="w-8 h-8 text-slate-400 mb-2" />
                   <span className="text-sm text-slate-500">Click to upload receipt</span>
-                  <span className="text-xs text-slate-400 mt-1">PNG, JPG, GIF up to 5MB</span>
+                  <span className="text-xs text-slate-400 mt-1">PNG, JPG, GIF up to 50MB</span>
                 </label>
               )}
             </div>
