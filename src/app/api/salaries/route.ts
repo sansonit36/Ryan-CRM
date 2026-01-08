@@ -14,12 +14,22 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const month = searchParams.get("month")
+    const startMonth = searchParams.get("startMonth")
+    const endMonth = searchParams.get("endMonth")
 
-    let where = {}
+    let where: any = {}
+
     if (month) {
-      where = {
-        month: month,
+      where.month = month
+    } else if (startMonth && endMonth) {
+      where.month = {
+        gte: startMonth,
+        lte: endMonth,
       }
+    } else if (startMonth) {
+      where.month = { gte: startMonth }
+    } else if (endMonth) {
+      where.month = { lte: endMonth }
     }
 
     const salaries = await prisma.salary.findMany({

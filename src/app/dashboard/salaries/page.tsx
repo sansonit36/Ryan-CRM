@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatCurrency } from "@/lib/utils"
 import {
   CreditCard,
@@ -31,6 +32,7 @@ import {
   Loader2,
   DollarSign,
   MoreHorizontal,
+  CalendarRange,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -72,16 +74,46 @@ export default function SalariesPage() {
   })
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [filterType, setFilterType] = useState("all")
   const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchSalaries()
-  }, [selectedMonth])
+  }, [filterType, selectedMonth])
 
   const fetchSalaries = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/salaries?month=${selectedMonth}`)
+      let query = ""
+
+      const now = new Date()
+      // Helper to format YYYY-MM
+      const fmt = (d: Date) => d.toISOString().slice(0, 7)
+
+      if (filterType === 'custom') {
+        query = `?month=${selectedMonth}`
+      } else if (filterType === 'this-month') {
+        query = `?startMonth=${fmt(now)}&endMonth=${fmt(now)}`
+      } else if (filterType === 'last-month') {
+        const last = new Date(now)
+        last.setMonth(now.getMonth() - 1)
+        query = `?startMonth=${fmt(last)}&endMonth=${fmt(last)}`
+      } else if (filterType === '3m') {
+        const start = new Date(now)
+        start.setMonth(now.getMonth() - 2) // Current + prev 2 = 3 months
+        query = `?startMonth=${fmt(start)}&endMonth=${fmt(now)}`
+      } else if (filterType === '6m') {
+        const start = new Date(now)
+        start.setMonth(now.getMonth() - 5)
+        query = `?startMonth=${fmt(start)}&endMonth=${fmt(now)}`
+      } else if (filterType === 'year') {
+        const start = new Date(now)
+        start.setMonth(now.getMonth() - 11)
+        query = `?startMonth=${fmt(start)}&endMonth=${fmt(now)}`
+      }
+      // 'all' sends no params
+
+      const res = await fetch(`/api/salaries${query}`)
       const data = await res.json()
       setSalaries(data)
     } catch (error) {
@@ -197,13 +229,31 @@ export default function SalariesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Salaries</h1>
           <p className="text-slate-500">Manage employee salaries and payments</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-40"
-          />
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <Tabs value={filterType} onValueChange={setFilterType} className="w-full md:w-auto">
+            <TabsList>
+              <TabsTrigger value="all">All Time</TabsTrigger>
+              <TabsTrigger value="this-month">This Month</TabsTrigger>
+              <TabsTrigger value="last-month">Last Month</TabsTrigger>
+              <TabsTrigger value="3m">3 Months</TabsTrigger>
+              <TabsTrigger value="6m">6 Months</TabsTrigger>
+              <TabsTrigger value="year">Year</TabsTrigger>
+              <TabsTrigger value="custom">
+                <CalendarRange className="w-4 h-4 mr-2" />
+                Custom
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {filterType === 'custom' && (
+            <Input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-40"
+            />
+          )}
+
           <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
             <Plus className="w-4 h-4 mr-2" />
             Add Salary
