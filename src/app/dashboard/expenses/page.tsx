@@ -8,6 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -95,17 +101,50 @@ export default function ExpensesPage() {
     date: new Date().toISOString().split("T")[0],
   })
 
+  // Filter State
+  const [filterType, setFilterType] = useState<"ALL" | "THIS_MONTH" | "LAST_MONTH" | "LAST_3_MONTHS" | "LAST_6_MONTHS" | "LAST_12_MONTHS" | "CUSTOM">("THIS_MONTH")
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchExpenses()
-  }, [selectedMonth])
+  }, [filterType, selectedMonth])
 
   const fetchExpenses = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/expenses?month=${selectedMonth}`)
+      let url = "/api/expenses"
+
+      const now = new Date()
+      let startDate: Date | null = null
+      let endDate: Date | null = null
+
+      if (filterType === "THIS_MONTH") {
+        url += `?month=${now.toISOString().slice(0, 7)}`
+      } else if (filterType === "LAST_MONTH") {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        url += `?month=${lastMonth.toISOString().slice(0, 7)}`
+      } else if (filterType === "CUSTOM") {
+        url += `?month=${selectedMonth}`
+      } else if (filterType !== "ALL") {
+        // Range filters
+        endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999))
+
+        if (filterType === "LAST_3_MONTHS") {
+          startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 3, 1))
+        } else if (filterType === "LAST_6_MONTHS") {
+          startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 6, 1))
+        } else if (filterType === "LAST_12_MONTHS") {
+          startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 12, 1))
+        }
+
+        if (startDate && endDate) {
+          url += `?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        }
+      }
+
+      console.log(`Fetching expenses with URL: ${url}`)
+      const res = await fetch(url)
       const data = await res.json()
       setExpenses(data)
     } catch (error) {
@@ -284,160 +323,184 @@ export default function ExpensesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Expenses</h1>
           <p className="text-slate-500">Track and manage business expenses</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-40"
-          />
-          <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Expense
-          </Button>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (!open) resetForm()
-        }}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Expense" : "Add New Expense"}</DialogTitle>
-              <DialogDescription>{editingId ? "Update expense details" : "Record a new business expense"}</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Expense title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount ($)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expense-category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger id="expense-category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(categoryConfig).map(([key, { label, icon }]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-2">
-                          {icon}
-                          {label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Additional details"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Receipt Image (Optional)</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="receipt-upload"
-                />
-                {receiptPreview ? (
-                  <div className="relative">
-                    <div className="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-slate-200">
-                      <Image
-                        src={receiptPreview}
-                        alt="Receipt preview"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={removeReceipt}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label
-                    htmlFor="receipt-upload"
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors"
-                  >
-                    <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                    <span className="text-sm text-slate-500">Click to upload receipt</span>
-                    <span className="text-xs text-slate-400 mt-1">PNG, JPG, GIF up to 5MB</span>
-                  </label>
-                )}
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={submitting || !formData.category}>
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    "Add Expense"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Expense
+        </Button>
       </div>
 
-      {/* Stats */}
+      {/* Time Filters */}
+      <div className="space-y-4">
+        <Tabs value={filterType} onValueChange={(val: any) => setFilterType(val)} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto">
+            <TabsTrigger value="ALL">All Time</TabsTrigger>
+            <TabsTrigger value="THIS_MONTH">This Month</TabsTrigger>
+            <TabsTrigger value="LAST_MONTH">Last Month</TabsTrigger>
+            <TabsTrigger value="LAST_3_MONTHS">Last 3M</TabsTrigger>
+            <TabsTrigger value="LAST_6_MONTHS">Last 6M</TabsTrigger>
+            <TabsTrigger value="LAST_12_MONTHS">Last 12M</TabsTrigger>
+            <TabsTrigger value="CUSTOM">Custom</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {filterType === "CUSTOM" && (
+          <div className="flex justify-end animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-2 bg-white p-2 rounded-lg border shadow-sm">
+              <Label htmlFor="month-picker" className="text-sm font-medium">Select Month:</Label>
+              <Input
+                id="month-picker"
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-40"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open)
+        if (!open) resetForm()
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Edit Expense" : "Add New Expense"}</DialogTitle>
+            <DialogDescription>{editingId ? "Update expense details" : "Record a new business expense"}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                placeholder="Expense title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount ($)</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expense-category">Category</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+              >
+                <SelectTrigger id="expense-category">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(categoryConfig).map(([key, { label, icon }]) => (
+                    <SelectItem key={key} value={key}>
+                      <span className="flex items-center gap-2">
+                        {icon}
+                        {label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Additional details"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Receipt Image (Optional)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="receipt-upload"
+              />
+              {receiptPreview ? (
+                <div className="relative">
+                  <div className="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-slate-200">
+                    <Image
+                      src={receiptPreview}
+                      alt="Receipt preview"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeReceipt}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="receipt-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors"
+                >
+                  <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                  <span className="text-sm text-slate-500">Click to upload receipt</span>
+                  <span className="text-xs text-slate-400 mt-1">PNG, JPG, GIF up to 5MB</span>
+                </label>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting || !formData.category}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Expense"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+
+      {/* Stats */ }
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-emerald-50">
           <CardContent className="p-6">
@@ -609,49 +672,49 @@ export default function ExpensesPage() {
         </Card>
       </div>
 
-      {/* Receipt Viewer Modal */}
-      <Dialog open={!!viewingReceipt} onOpenChange={() => setViewingReceipt(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Receipt</DialogTitle>
-          </DialogHeader>
-          <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100">
-            {viewingReceipt && (
-              viewingReceipt.startsWith("/uploads/") ? (
-                <Image
-                  src={viewingReceipt}
-                  alt="Receipt"
-                  fill
-                  className="object-contain"
-                />
-              ) : (
-                <iframe
-                  src={viewingReceipt}
-                  className="w-full h-full"
-                  title="Receipt"
-                />
-              )
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setViewingReceipt(null)}
-            >
-              Close
+  {/* Receipt Viewer Modal */ }
+  <Dialog open={!!viewingReceipt} onOpenChange={() => setViewingReceipt(null)}>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Receipt</DialogTitle>
+      </DialogHeader>
+      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100">
+        {viewingReceipt && (
+          viewingReceipt.startsWith("/uploads/") ? (
+            <Image
+              src={viewingReceipt}
+              alt="Receipt"
+              fill
+              className="object-contain"
+            />
+          ) : (
+            <iframe
+              src={viewingReceipt}
+              className="w-full h-full"
+              title="Receipt"
+            />
+          )
+        )}
+      </div>
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setViewingReceipt(null)}
+        >
+          Close
+        </Button>
+        {viewingReceipt && (
+          <a href={viewingReceipt} target="_blank" rel="noopener noreferrer">
+            <Button>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Open Full Size
             </Button>
-            {viewingReceipt && (
-              <a href={viewingReceipt} target="_blank" rel="noopener noreferrer">
-                <Button>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open Full Size
-                </Button>
-              </a>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </a>
+        )}
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+    </div >
   )
 }

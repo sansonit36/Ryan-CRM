@@ -14,9 +14,19 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const month = searchParams.get("month")
+    const startDateParam = searchParams.get("startDate")
+    const endDateParam = searchParams.get("endDate")
 
     let where = {}
-    if (month) {
+
+    if (startDateParam && endDateParam) {
+      where = {
+        date: {
+          gte: new Date(startDateParam),
+          lte: new Date(endDateParam),
+        },
+      }
+    } else if (month) {
       const [yearStr, monthStr] = month.split("-")
       const year = parseInt(yearStr)
       const monthIndex = parseInt(monthStr) - 1
