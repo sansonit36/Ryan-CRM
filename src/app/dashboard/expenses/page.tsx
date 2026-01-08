@@ -632,18 +632,13 @@ export default function ExpensesPage() {
                           onClick={() => setViewingReceipt(expense.receiptUrl)}
                           className="relative w-8 h-8 rounded-lg overflow-hidden border-2 border-slate-200 hover:border-violet-400 transition-colors flex-shrink-0"
                         >
-                          {expense.receiptUrl.startsWith("/uploads/") ? (
-                            <Image
-                              src={expense.receiptUrl}
-                              alt="Receipt"
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-violet-100 flex items-center justify-center">
-                              <ImageIcon className="w-3 h-3 text-violet-600" />
-                            </div>
-                          )}
+                          <Image
+                            src={expense.receiptUrl}
+                            alt="Receipt"
+                            fill
+                            className="object-cover"
+                            unoptimized={!expense.receiptUrl.startsWith("/")}
+                          />
                         </button>
                       )}
 
@@ -680,20 +675,15 @@ export default function ExpensesPage() {
           </DialogHeader>
           <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100">
             {viewingReceipt && (
-              viewingReceipt.startsWith("/uploads/") ? (
+              <div className="relative w-full h-full">
                 <Image
                   src={viewingReceipt}
                   alt="Receipt"
                   fill
                   className="object-contain"
+                  unoptimized={!viewingReceipt.startsWith("/")}
                 />
-              ) : (
-                <iframe
-                  src={viewingReceipt}
-                  className="w-full h-full"
-                  title="Receipt"
-                />
-              )
+              </div>
             )}
           </div>
           <DialogFooter>
