@@ -59,10 +59,24 @@ export default function ReviewVideosPage() {
   const [feedback, setFeedback] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "name_asc" | "name_desc">("newest")
+  const [selectedEditor, setSelectedEditor] = useState<string>("ALL")
 
   const canReview = session?.user?.role === "ADMIN" || session?.user?.role === "SOCIAL_MANAGER"
 
-  const sortedVideos = [...videos].sort((a, b) => {
+  // Calculate stats for unique editors
+  const editorStats = videos.reduce((acc, video) => {
+    const editorName = video.uploadedBy.name
+    acc[editorName] = (acc[editorName] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const sortedEditors = Object.entries(editorStats).sort((a, b) => b[1] - a[1]) // Sort by count descending
+
+  const filteredVideos = videos.filter((video) =>
+    selectedEditor === "ALL" || video.uploadedBy.name === selectedEditor
+  )
+
+  const sortedVideos = [...filteredVideos].sort((a, b) => {
     switch (sortOrder) {
       case "newest":
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -158,19 +172,55 @@ export default function ReviewVideosPage() {
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex justify-end">
-        <Select value={sortOrder} onValueChange={(val: any) => setSortOrder(val)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest First</SelectItem>
-            <SelectItem value="oldest">Oldest First</SelectItem>
-            <SelectItem value="name_asc">Editor (A-Z)</SelectItem>
-            <SelectItem value="name_desc">Editor (Z-A)</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Editor Tabs */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedEditor("ALL")}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedEditor === "ALL"
+                ? "bg-violet-600 text-white shadow-md shadow-violet-200"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+              }`}
+          >
+            All Editors
+            <span className={`px-1.5 py-0.5 rounded-full text-xs ${selectedEditor === "ALL" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+              }`}>
+              {videos.length}
+            </span>
+          </button>
+
+          {sortedEditors.map(([name, count]) => (
+            <button
+              key={name}
+              onClick={() => setSelectedEditor(name)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedEditor === name
+                  ? "bg-violet-600 text-white shadow-md shadow-violet-200"
+                  : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+                }`}
+            >
+              {name}
+              <span className={`px-1.5 py-0.5 rounded-full text-xs ${selectedEditor === name ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                }`}>
+                {count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Sort Filter */}
+        <div className="flex-shrink-0">
+          <Select value={sortOrder} onValueChange={(val: any) => setSortOrder(val)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="name_asc">Editor (A-Z)</SelectItem>
+              <SelectItem value="name_desc">Editor (Z-A)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Stats */}
