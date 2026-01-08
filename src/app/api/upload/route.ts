@@ -11,6 +11,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Check if Supabase is configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      console.error("Supabase URL is missing or placeholder")
+      return NextResponse.json(
+        { error: "Setup Error: Supabase Env Vars missing in Vercel. Please add NEXT_PUBLIC_SUPABASE_URL." },
+        { status: 500 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get("file") as File | null
 
@@ -67,8 +77,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: publicUrl })
 
-  } catch (error) {
-    console.error("Upload error:", error)
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Upload error details:", error)
+    return NextResponse.json(
+      { error: error.message || "Failed to upload file due to server error" },
+      { status: 500 }
+    )
   }
 }
