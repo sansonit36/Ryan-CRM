@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { writeFile, mkdir } from "fs/promises"
-import path from "path"
-import { existsSync } from "fs"
+import { supabase } from "@/lib/supabase"
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,28 +36,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads")
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
     // Generate unique filename
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(2, 8)
     const extension = file.name.split(".").pop()
     const filename = `receipt_${timestamp}_${randomString}.${extension}`
 
-    // Convert file to buffer and save
+    // Upload to Supabase Storage
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const filepath = path.join(uploadsDir, filename)
-    await writeFile(filepath, buffer)
 
-    // Return the public URL
-    const url = `/uploads/${filename}`
+    const { data, error } = await supabase
+      .storage
+      .from("receipts")
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: false
+      })
 
-    return NextResponse.json({ url })
+    if (error) {
+      console.error("Supabase Storage Error:", error)
+      return NextResponse.json({ error: "Storage upload failed" }, { status: 500 })
+    }
+
+    // Get Public URL
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from("receipts")
+      .getPublicUrl(filename)
+
+    return NextResponse.json({ url: publicUrl })
+
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 })
