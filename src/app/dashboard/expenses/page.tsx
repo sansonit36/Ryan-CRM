@@ -59,6 +59,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts"
+import { toast } from "sonner"
 
 interface Expense {
   id: string
@@ -203,9 +204,13 @@ export default function ExpensesPage() {
         const { url } = await res.json()
         return url
       }
+
+      const errorData = await res.json()
+      toast.error(errorData.error || "Upload failed")
       return null
     } catch (error) {
       console.error("Error uploading receipt:", error)
+      toast.error("Error uploading receipt. Check network or file size.")
       return null
     } finally {
       setUploading(false)
@@ -236,12 +241,16 @@ export default function ExpensesPage() {
       })
 
       if (res.ok) {
+        toast.success(editingId ? "Expense updated" : "Expense added")
         setDialogOpen(false)
         fetchExpenses() // Refresh list
         resetForm()
+      } else {
+        toast.error("Failed to save expense")
       }
     } catch (error) {
       console.error("Error saving expense:", error)
+      toast.error("An unexpected error occurred")
     } finally {
       setSubmitting(false)
     }
