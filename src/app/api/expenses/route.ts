@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,8 +17,13 @@ export async function GET(req: Request) {
 
     let where = {}
     if (month) {
-      const startDate = new Date(`${month}-01`)
-      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0, 23, 59, 59)
+      const [yearStr, monthStr] = month.split("-")
+      const year = parseInt(yearStr)
+      const monthIndex = parseInt(monthStr) - 1
+
+      const startDate = new Date(Date.UTC(year, monthIndex, 1))
+      const endDate = new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59, 999))
+
       where = {
         date: {
           gte: startDate,
