@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { formatCurrency } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   DollarSign,
   TrendingUp,
@@ -11,6 +12,7 @@ import {
   CreditCard,
   PieChart as PieChartIcon,
   BarChart3,
+  CalendarRange,
 } from "lucide-react"
 import {
   PieChart,
@@ -57,17 +59,57 @@ const categoryLabels: Record<string, string> = {
 }
 
 export default function FinancialsPage() {
+  const [filterType, setFilterType] = useState("this-month")
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchStats()
-  }, [selectedMonth])
+  }, [filterType, selectedMonth])
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`/api/stats?month=${selectedMonth}`)
+      let query = ""
+      const now = new Date()
+
+      // Helper to format YYYY-MM
+      const formatMonth = (d: Date) => {
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        return `${year}-${month}`
+      }
+
+      if (filterType === 'custom') {
+        query = `?month=${selectedMonth}`
+      } else if (filterType === 'this-month') {
+        query = `?month=${formatMonth(now)}`
+      } else if (filterType === 'last-month') {
+        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        query = `?month=${formatMonth(last)}`
+      } else {
+        // Range filters
+        let startDate: Date | null = null
+        // End date is end of today in UTC to catch everything
+        const endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59))
+
+        if (filterType === '3m') {
+          startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 2, 1)) // Current + 2 prev
+        } else if (filterType === '6m') {
+          startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1))
+        } else if (filterType === 'year') {
+          startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 11, 1))
+        } else if (filterType === 'all') {
+          // No filter sends all data
+          startDate = null
+        }
+
+        if (startDate) {
+          query = `?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        }
+      }
+
+      const res = await fetch(`/api/stats${query}`)
       const data = await res.json()
       setStats(data)
     } catch (error) {
@@ -126,13 +168,30 @@ export default function FinancialsPage() {
           <h1 className="text-2xl font-bold text-slate-900">Financial Overview</h1>
           <p className="text-slate-500">Detailed financial analysis and metrics</p>
         </div>
-        <div className="flex items-center gap-4">
-          <Input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-40"
-          />
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <Tabs value={filterType} onValueChange={setFilterType} className="w-full md:w-auto">
+            <TabsList>
+              <TabsTrigger value="all">All Time</TabsTrigger>
+              <TabsTrigger value="this-month">This Month</TabsTrigger>
+              <TabsTrigger value="last-month">Last Month</TabsTrigger>
+              <TabsTrigger value="3m">3 Months</TabsTrigger>
+              <TabsTrigger value="6m">6 Months</TabsTrigger>
+              <TabsTrigger value="year">Year</TabsTrigger>
+              <TabsTrigger value="custom">
+                <CalendarRange className="w-4 h-4 mr-2" />
+                Custom
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {filterType === 'custom' && (
+            <Input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-40"
+            />
+          )}
         </div>
       </div>
 

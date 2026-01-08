@@ -29,14 +29,40 @@ export async function GET(request: Request) {
       }
     }
 
-    // Month Filter (for Financials)
-    let expenseWhere = {}
-    let salaryWhere = {}
+    // Date Filters (Financials)
+    const startDateParam = searchParams.get("startDate")
+    const endDateParam = searchParams.get("endDate")
 
-    if (month) {
-      // Expense filter (DateTime)
+    let expenseWhere: any = {}
+    let salaryWhere: any = {}
+
+    if (startDateParam && endDateParam) {
+      // Range Filter
+      const start = new Date(startDateParam)
+      const end = new Date(endDateParam)
+
+      expenseWhere = {
+        date: {
+          gte: start,
+          lte: end,
+        },
+      }
+
+      // Convert date range to YYYY-MM strings for Salary comparison
+      const startMonthStr = start.toISOString().slice(0, 7)
+      const endMonthStr = end.toISOString().slice(0, 7)
+
+      salaryWhere = {
+        month: {
+          gte: startMonthStr,
+          lte: endMonthStr
+        }
+      }
+    } else if (month) {
+      // Single Month Filter (legacy/custom)
       const startDate = new Date(`${month}-01`)
       const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0, 23, 59, 59)
+
       expenseWhere = {
         date: {
           gte: startDate,
@@ -44,7 +70,6 @@ export async function GET(request: Request) {
         },
       }
 
-      // Salary filter (String YYYY-MM)
       salaryWhere = {
         month: month
       }
