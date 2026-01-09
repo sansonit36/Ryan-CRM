@@ -21,9 +21,11 @@ export async function GET(request: Request) {
       const days = parseInt(timeRange.replace("d", ""))
       if (!isNaN(days)) {
         const pastDate = new Date(now.setDate(now.getDate() - days))
-        dateFilter = {
-          postedAt: {
-            gte: pastDate
+        if (!isNaN(pastDate.getTime())) {
+          dateFilter = {
+            postedAt: {
+              gte: pastDate
+            }
           }
         }
       }
@@ -41,21 +43,23 @@ export async function GET(request: Request) {
       const start = new Date(startDateParam)
       const end = new Date(endDateParam)
 
-      expenseWhere = {
-        date: {
-          gte: start,
-          lte: end,
-        },
-      }
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        expenseWhere = {
+          date: {
+            gte: start,
+            lte: end,
+          },
+        }
 
-      // Convert date range to YYYY-MM strings for Salary comparison
-      const startMonthStr = start.toISOString().slice(0, 7)
-      const endMonthStr = end.toISOString().slice(0, 7)
+        // Convert date range to YYYY-MM strings for Salary comparison
+        const startMonthStr = start.toISOString().slice(0, 7)
+        const endMonthStr = end.toISOString().slice(0, 7)
 
-      salaryWhere = {
-        month: {
-          gte: startMonthStr,
-          lte: endMonthStr
+        salaryWhere = {
+          month: {
+            gte: startMonthStr,
+            lte: endMonthStr
+          }
         }
       }
     } else if (month) {
