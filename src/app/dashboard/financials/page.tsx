@@ -135,12 +135,12 @@ export default function FinancialsPage() {
     )
   }
 
-  const totalExpenses = stats?.expenses.total || 0
-  const totalSalaries = stats?.salaries.total || 0
-  const monthlySubscriptions = stats?.subscriptions.monthlyCost || 0
+  const totalExpenses = stats?.expenses?.total || 0
+  const totalSalaries = stats?.salaries?.total || 0
+  const monthlySubscriptions = stats?.subscriptions?.monthlyCost || 0
   const totalMonthlyBurn = totalExpenses + totalSalaries + monthlySubscriptions
 
-  const pieData = stats?.expenses.byCategory
+  const pieData = stats?.expenses?.byCategory
     ? Object.entries(stats.expenses.byCategory).map(([name, value]) => ({
       name: categoryLabels[name] || name,
       value,

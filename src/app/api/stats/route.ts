@@ -142,8 +142,11 @@ export async function GET(request: Request) {
       }),
 
       // Social Stats
-      (prisma as any).socialPost.findMany({
+      prisma.socialPost.findMany({
         where: dateFilter,
+      }).catch(err => {
+        console.error("Social stats error:", err)
+        return []
       }),
 
       // Top Performing Videos (Social)
@@ -159,6 +162,9 @@ export async function GET(request: Request) {
           }
         },
         take: 20,
+      }).catch(err => {
+        console.error("Social videos error:", err)
+        return []
       })
     ])
 
