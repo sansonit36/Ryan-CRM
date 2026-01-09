@@ -178,8 +178,8 @@ export default function ReviewVideosPage() {
           <button
             onClick={() => setSelectedEditor("ALL")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedEditor === "ALL"
-                ? "bg-violet-600 text-white shadow-md shadow-violet-200"
-                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+              ? "bg-violet-600 text-white shadow-md shadow-violet-200"
+              : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
               }`}
           >
             All Editors
@@ -194,8 +194,8 @@ export default function ReviewVideosPage() {
               key={name}
               onClick={() => setSelectedEditor(name)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedEditor === name
-                  ? "bg-violet-600 text-white shadow-md shadow-violet-200"
-                  : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+                ? "bg-violet-600 text-white shadow-md shadow-violet-200"
+                : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
                 }`}
             >
               {name}
@@ -231,91 +231,101 @@ export default function ReviewVideosPage() {
               <Clock className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-3xl font-bold text-slate-900">{videos.length}</p>
-              <p className="text-sm text-slate-500">Videos pending review</p>
+              <p className="text-3xl font-bold text-slate-900">{sortedVideos.length}</p>
+              <p className="text-sm text-slate-500">
+                {selectedEditor === "ALL" ? "Total pending review" : `Pending for ${selectedEditor}`}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Videos List */}
-      {
-        videos.length === 0 ? (
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-emerald-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">All caught up!</h3>
-              <p className="text-slate-500">No videos pending review</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {videos.map((video) => (
-              <Card key={video.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-6">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 flex-shrink-0">
-                      <Video className="w-7 h-7 text-white" />
+      {videos.length === 0 ? (
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-12 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">All caught up!</h3>
+            <p className="text-slate-500">No videos pending review</p>
+          </CardContent>
+        </Card>
+      ) : sortedVideos.length === 0 ? (
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-12 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No videos found</h3>
+            <p className="text-slate-500">No pending videos for this editor</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {sortedVideos.map((video) => (
+            <Card key={video.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 flex-shrink-0">
+                    <Video className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-slate-900">{video.title}</h3>
+                      <Badge variant="warning">Pending</Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{video.title}</h3>
-                        <Badge variant="warning">Pending</Badge>
-                      </div>
-                      {video.description && (
-                        <p className="text-sm text-slate-500 mb-3 line-clamp-2">
-                          {video.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-sm text-slate-400">
-                        <span className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          {video.uploadedBy.name}
-                        </span>
-                        <span>Uploaded {formatDate(video.createdAt)}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 flex-shrink-0">
-                      <a
-                        href={video.googleDriveUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="outline" className="w-full">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Watch Video
-                        </Button>
-                      </a>
-                      {canReview && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="success"
-                            size="sm"
-                            onClick={() => openReviewDialog(video, "APPROVED")}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => openReviewDialog(video, "REJECTED")}
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+                    {video.description && (
+                      <p className="text-sm text-slate-500 mb-3 line-clamp-2">
+                        {video.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 text-sm text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        {video.uploadedBy.name}
+                      </span>
+                      <span>Uploaded {formatDate(video.createdAt)}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )
-      }
+                  <div className="flex flex-col gap-2 flex-shrink-0">
+                    <a
+                      href={video.googleDriveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" className="w-full">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Watch Video
+                      </Button>
+                    </a>
+                    {canReview && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => openReviewDialog(video, "APPROVED")}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => openReviewDialog(video, "REJECTED")}
+                        >
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Review Dialog */}
       <Dialog open={!!reviewingVideo} onOpenChange={() => setReviewingVideo(null)}>
