@@ -204,6 +204,9 @@ export default function DashboardPage() {
 
   const showFinancials = session?.user?.role === "ADMIN" || session?.user?.role === "INVESTOR"
 
+  // Calculate generic total burn (Expenses + Salaries + Subscriptions)
+  const totalOutgoing = (stats?.expenses?.total || 0) + (stats?.salaries?.total || 0) + (stats?.subscriptions?.monthlyCost || 0)
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -290,12 +293,12 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm font-medium text-slate-500">Total Expenses</p>
                     <p className="text-3xl font-bold text-slate-900 mt-1">
-                      {formatCurrency(stats?.expenses?.total || 0)}
+                      {formatCurrency(totalOutgoing)}
                     </p>
                     <div className="flex items-center gap-1 mt-2">
                       <ArrowUpRight className="w-3 h-3 text-emerald-500" />
                       <span className="text-xs text-emerald-600 font-medium">
-                        {Object.keys(stats?.expenses?.byCategory || {}).length} categories
+                        Includes salaries & subscriptions
                       </span>
                     </div>
                   </div>
