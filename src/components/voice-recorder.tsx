@@ -3,9 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Mic, Square, Play, Pause, Trash2, Upload, Loader2, RotateCcw } from "lucide-react"
-import { toast } from "sonner" // Assuming sonner is used, or I'll check what toast is used. I'll stick to console/alert if unsure or check providers.
-// Checked providers? src/components/providers.tsx might have toast.
-// Let's assume standard handling or just UI feedback.
+import { toast } from "sonner"
 
 export function VoiceRecorder({ onRecordingComplete }: { onRecordingComplete: (url: string) => void }) {
     const [isRecording, setIsRecording] = useState(false)
@@ -90,37 +88,22 @@ export function VoiceRecorder({ onRecordingComplete }: { onRecordingComplete: (u
 
         setIsUploading(true)
         try {
-            // 1. Get signed URL
+            const formData = new FormData()
+            formData.append("file", audioBlob, "voice-note.webm")
+
             const res = await fetch("/api/upload/voice", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    filename: "voice-note.webm",
-                    fileType: "audio/webm"
-                })
+                body: formData
             })
+
+            const data = await res.json()
 
             if (!res.ok) {
-                throw new Error("Failed to get upload URL")
+                throw new Error(data.error || "Failed to upload voice note")
             }
 
-            const { signedUrl, publicUrl } = await res.json()
-
-            // 2. Upload to Supabase
-            const uploadRes = await fetch(signedUrl, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "audio/webm"
-                },
-                body: audioBlob
-            })
-
-            if (!uploadRes.ok) {
-                throw new Error("Failed to upload file")
-            }
-
-            // 3. Callback
-            onRecordingComplete(publicUrl)
+            // Callback with public URL
+            onRecordingComplete(data.publicUrl)
 
         } catch (error) {
             console.error("Upload failed:", error)
@@ -154,7 +137,7 @@ export function VoiceRecorder({ onRecordingComplete }: { onRecordingComplete: (u
                     <Button
                         size="sm"
                         variant="outline"
-                        className="w-full bg-white text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
+                        className="w-full bg-white text-red-500 hover:text-red-600 hover:bg-red-50 hover:border-red-100"
                         onClick={startRecording}
                     >
                         <Mic className="w-4 h-4 mr-2" />
