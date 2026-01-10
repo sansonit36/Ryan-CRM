@@ -18,7 +18,7 @@ export async function POST(
     }
 
     const { id } = await params
-    const { status, feedback } = await req.json()
+    const { status, feedback, audioUrl } = await req.json()
 
     if (!status || !["APPROVED", "REJECTED"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 })
@@ -31,6 +31,7 @@ export async function POST(
         reviewerId: session.user.id,
         status,
         feedback,
+        audioUrl,
       },
     })
 

@@ -27,6 +27,7 @@ interface VideoType {
   reviews: Array<{
     status: string
     feedback: string | null
+    audioUrl: string | null
     reviewer: { name: string }
     createdAt: string
   }>
@@ -46,7 +47,7 @@ export default function MyVideosPage() {
       const res = await fetch("/api/videos")
       const data = await res.json()
       // Filter videos by current user
-      const myVideos = data.filter((v: VideoType & { uploadedById: string }) => 
+      const myVideos = data.filter((v: VideoType & { uploadedById: string }) =>
         v.uploadedById === session?.user?.id
       )
       setVideos(myVideos)
@@ -215,15 +216,36 @@ export default function MyVideosPage() {
                       </div>
 
                       {/* Show feedback if rejected */}
-                      {video.status === "REJECTED" && video.reviews[0]?.feedback && (
+                      {video.status === "REJECTED" && video.reviews[0] && (
                         <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-100">
-                          <div className="flex items-center gap-2 text-red-700 text-sm font-medium mb-1">
-                            <MessageSquare className="w-4 h-4" />
-                            Feedback from {video.reviews[0].reviewer.name}
-                          </div>
-                          <p className="text-sm text-red-600">{video.reviews[0].feedback}</p>
+                          {video.reviews[0].feedback && (
+                            <>
+                              <div className="flex items-center gap-2 text-red-700 text-sm font-medium mb-1">
+                                <MessageSquare className="w-4 h-4" />
+                                Feedback from {video.reviews[0].reviewer.name}
+                              </div>
+                              <p className="text-sm text-red-600">{video.reviews[0].feedback}</p>
+                            </>
+                          )}
+                          {video.reviews[0].audioUrl && (
+                            <div className="mt-2">
+                              <p className="text-xs font-medium text-red-700 mb-1">Voice Note:</p>
+                              <audio controls src={video.reviews[0].audioUrl} className="w-full h-8" />
+                            </div>
+                          )}
                         </div>
                       )}
+
+                      {/* Reply button for editors */}
+                      {video.status === "REJECTED" && (
+                        <Link href="/dashboard/chat">
+                          <Button variant="outline" size="sm" className="mt-2 text-violet-600 border-violet-200 hover:bg-violet-50 w-full">
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Reply using Chat
+                          </Button>
+                        </Link>
+                      )}
+
 
                       {/* Show approval info */}
                       {video.status === "APPROVED" && video.reviews[0] && (

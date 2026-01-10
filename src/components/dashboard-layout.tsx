@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   Send,
-  BookOpen
+  BookOpen,
+  MessageSquare,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -35,6 +36,7 @@ const roleNavItems = {
     { href: "/dashboard/expenses", label: "Expenses", icon: DollarSign },
     { href: "/dashboard/salaries", label: "Salaries", icon: CreditCard },
     { href: "/dashboard/subscriptions", label: "Subscriptions", icon: FileText },
+    { href: "/dashboard/chat", label: "Team Chat", icon: MessageSquare },
     { href: "/dashboard/team", label: "Team", icon: Users },
   ],
   EDITOR: [
@@ -44,12 +46,14 @@ const roleNavItems = {
     { href: "/dashboard/videos", label: "All Videos", icon: Video },
     { href: "/dashboard/published", label: "Published", icon: Send },
     { href: "/dashboard/upload", label: "Upload Video", icon: Video },
+    { href: "/dashboard/chat", label: "Team Chat", icon: MessageSquare },
   ],
   SOCIAL_MANAGER: [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
     { href: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/dashboard/review", label: "Review Videos", icon: CheckCircle },
     { href: "/dashboard/published", label: "Published", icon: Send },
+    { href: "/dashboard/chat", label: "Team Chat", icon: MessageSquare },
   ],
   INVESTOR: [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -60,6 +64,7 @@ const roleNavItems = {
     { href: "/dashboard/expenses", label: "Expenses", icon: DollarSign },
     { href: "/dashboard/salaries", label: "Salaries", icon: CreditCard },
     { href: "/dashboard/subscriptions", label: "Subscriptions", icon: FileText },
+    { href: "/dashboard/chat", label: "Team Chat", icon: MessageSquare },
     { href: "/dashboard/team", label: "Team", icon: Users },
   ],
 }

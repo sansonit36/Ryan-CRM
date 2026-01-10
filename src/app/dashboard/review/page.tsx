@@ -36,6 +36,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { VoiceRecorder } from "@/components/voice-recorder"
+
 interface VideoType {
   id: string
   title: string
@@ -57,6 +59,7 @@ export default function ReviewVideosPage() {
   const [reviewingVideo, setReviewingVideo] = useState<VideoType | null>(null)
   const [reviewAction, setReviewAction] = useState<"APPROVED" | "REJECTED" | null>(null)
   const [feedback, setFeedback] = useState("")
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "name_asc" | "name_desc">("newest")
   const [selectedEditor, setSelectedEditor] = useState<string>("ALL")
@@ -120,6 +123,7 @@ export default function ReviewVideosPage() {
         body: JSON.stringify({
           status: reviewAction,
           feedback: feedback || null,
+          audioUrl: audioUrl || null,
         }),
       })
 
@@ -128,6 +132,7 @@ export default function ReviewVideosPage() {
         setReviewingVideo(null)
         setReviewAction(null)
         setFeedback("")
+        setAudioUrl(null)
       }
     } catch (error) {
       console.error("Error reviewing video:", error)
@@ -140,6 +145,7 @@ export default function ReviewVideosPage() {
     setReviewingVideo(video)
     setReviewAction(action)
     setFeedback("")
+    setAudioUrl(null)
   }
 
   if (loading) {
@@ -355,6 +361,12 @@ export default function ReviewVideosPage() {
               onChange={(e) => setFeedback(e.target.value)}
               rows={4}
             />
+            {reviewAction === "REJECTED" && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-slate-700 mb-2">Voice Note (Optional)</p>
+                <VoiceRecorder onRecordingComplete={(url) => setAudioUrl(url)} />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -362,7 +374,9 @@ export default function ReviewVideosPage() {
               variant="outline"
               onClick={() => {
                 setReviewingVideo(null)
+                setReviewingVideo(null)
                 setFeedback("")
+                setAudioUrl(null)
               }}
             >
               Cancel
