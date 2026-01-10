@@ -28,22 +28,8 @@ export async function POST(request: NextRequest) {
         const extension = filename.split(".").pop() || "webm"
         const uniqueFilename = `voice_${timestamp}_${randomString}.${extension}`
 
-        // Ensure bucket exists
-        const bucketName = 'voice-notes'
-        const { data: buckets } = await supabase.storage.listBuckets()
-        const bucketExists = buckets?.some(b => b.name === bucketName)
-
-        if (!bucketExists) {
-            const { error: createError } = await supabase.storage.createBucket(bucketName, {
-                public: true,
-                fileSizeLimit: 10485760, // 10MB
-                allowedMimeTypes: ['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/wav', 'audio/mpeg']
-            })
-            if (createError) {
-                console.error("Error creating bucket:", createError)
-                // Fallback to trying to upload (maybe list buckets failed but it exists?)
-            }
-        }
+        // Use receipts bucket since it is known to exist
+        const bucketName = 'receipts'
 
         // Upload to Supabase
         const { error: uploadError } = await supabase
