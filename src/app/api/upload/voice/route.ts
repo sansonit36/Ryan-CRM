@@ -24,30 +24,22 @@ export async function POST(request: NextRequest) {
         const uniqueFilename = `voice_${timestamp}_${randomString}.${extension}`
 
         // Create Signed Upload URL
-        // Using 'voice-notes' bucket. If it doesn't exist, this might fail or the client upload will fail.
-        // For now, let's try 'voice-notes'.
-        // NOTE: The user needs to create a public bucket named 'voice-notes' in Supabase.
-
-        // Check if we should fallback to receipts (temporary hack if voice-notes isn't set up)
-        // But better to enforce structure.
+        // Using 'receipts' bucket since it is known to exist.
 
         const { data: signedData, error: signedError } = await supabase
             .storage
-            .from('voice-notes')
+            .from('receipts')
             .createSignedUploadUrl(uniqueFilename)
 
         if (signedError) {
-            // Fallback to receipts if voice-notes bucket doesn't exist?
-            // It's risky to pollute receipts. I'll verify if I can catch this.
-            // If the error is "Bucket not found", we should tell the user.
-            console.error("Error creating signed url for voice-notes:", signedError)
-            return NextResponse.json({ error: "Storage bucket issue. Please ensure 'voice-notes' bucket exists." }, { status: 500 })
+            console.error("Error creating signed url for voice:", signedError)
+            return NextResponse.json({ error: "Storage bucket issue." }, { status: 500 })
         }
 
         // Get Public URL
         const { data: { publicUrl } } = supabase
             .storage
-            .from("voice-notes")
+            .from("receipts")
             .getPublicUrl(uniqueFilename)
 
         return NextResponse.json({
